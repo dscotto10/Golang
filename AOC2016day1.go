@@ -1,9 +1,10 @@
 package main
 
-import (	"fmt"
-		  	"io/ioutil"
-		  	"strings"		
-			"strconv"
+import 		(	
+		"fmt"
+		"io/ioutil"
+		"strings"		
+		"strconv"
 		)
 
 //The "turner" function here uses numbers 0-3 to represent directions.
@@ -23,32 +24,30 @@ func turner(a string,b int) int {
 	return b
 }
 
-//If our heading is 0 (North) or 1 (East), we add to the distance value.
-//If our heading is 2 (South) or 3 (West), we subtract from the distance value.
-//This is essentially like a coordinate grid.
-func moveme(distance int, facing int, instruction string) int {
-	int_instruction, err := strconv.Atoi(instruction[1:])
-	if err != nil {
-        fmt.Print(err)
-    }	
-	if facing < 2 {
-		distance += int(int_instruction)
-		} else {
-			distance -= int(int_instruction)
-			}
-	return distance
-}
-
-//Note that func moveme was deprecated by 1B.
-//stepmove operates under a similar principle.
-//It moves one step at a time and adds every position to a slice of slices.
+//stepmove is a complex function. We'll go through it piece by piece.
+//"position []int is the "coordinate" at which the moving piece rests at the start of an instruction.
+//"facing int" is the direction that the piece is resting, as determined by "turner."
+//"instruction" is the input from the instructions file. (R2, L5, etc etc etc).
+//"pos_list" is a slice of slices, with every item in the slice being a coordinate.
 func stepmove(position []int, facing int, instruction string, pos_list [][]int) [][]int {
+	//First, we take just the "distance" from the instruction, and convert it into an integer using Atoi.
 	int_instruction, err := strconv.Atoi(instruction[1:])
+	//Handle errors.
 	if err != nil {
         fmt.Print(err)
-    }
-    if facing == 0 {
-	 	for j := 1; j <= int_instruction; j++ {
+    	}
+	//There are four possible FOR loops that we could run through, but they are all roughly the same.
+	//The FOR loop is designed to append every position we pass through to the "pos_list."
+	//We adjust the number of the position based on the instruction.
+	//If we're facing North, we add j to the y coordinate.
+	//If we're facing East, we add j to the x coordinate.
+	//If we're facing South, we subtract a number from the y coordinate.
+	//If we're facing West, we subtract a number from the x coordinate.
+	//Each requires two steps: first, we append a "nil" item to the pos_list slice.
+	//Then we replace the "nil" with our new coordinate.
+	//This function returns the updated pos_list.
+    	if facing == 0 {
+		for j := 1; j <= int_instruction; j++ {
 	 		pos_list = append(pos_list,nil)	 		
 	 		pos_list[len(pos_list)-1] = append(pos_list[len(pos_list)-1], position[0],position[1]+j)
 	 		}
@@ -74,12 +73,14 @@ func stepmove(position []int, facing int, instruction string, pos_list [][]int) 
 
 
 //Simple function: is string a in map b?
+//Will return "true" if yes, "false" if no.
 func check_map (a string, b map[string]int) bool {
 _, found := b[a]
 	return found
 }
 
-//Absolute value. Apparently this doesn't exist in Golang.
+//We need an absolute value function; Golang doesn't have one built in.
+//Very simple math.
 func Abs(x int) int {
 	if x < 0 {
 		return -x
@@ -89,31 +90,33 @@ func Abs(x int) int {
 }
 
 //Making a concatenated string for our map.
+//Two steps here: we create a list of strings: [x, x-coordinate, y, y-coordinate].
+//Then we concatenate them into a single string.
 func stringmaker(a []int) string {
 	values := []string{"x", strconv.Itoa(a[0]), "y", strconv.Itoa(a[1])}
 	return strings.Join(values,"")
 }
 
+//Our main program.
 func main() {	
-		//Read the input, and error handle.		
-		inputtext, err := ioutil.ReadFile("day1input.txt")
+	//Read the input, and error handle.		
+	inputtext, err := ioutil.ReadFile("day1input.txt")
 		
-		if err != nil {
-        fmt.Print(err)
-    }		
+	if err != nil {
+        	fmt.Print(err)
+    	}		
 		
-		//Convert the input text into a slice.
-		instructions := strings.Split(string(inputtext), ", ")
+	//Convert the input text into a slice.
+	instructions := strings.Split(string(inputtext), ", ")
 		
-    //Initialize some variables.
-		vdistance := 0
-		hdistance := 0
-		facing_var := 0
-		locations := make([][]int,1)
-		pos_slice := []int{hdistance,vdistance}	
-    answer_1b := 0
-		loc_map := make(map[string]int)
-
+    	//Initialize some variables to solve 1A.
+	vdistance := 0
+	hdistance := 0
+	facing_var := 0
+	//Locations is our slice of slices.
+	locations := make([][]int,1)
+	//pos_slice handles the individual coordinates. Our first is 0,0.
+	pos_slice := []int{hdistance,vdistance}	
     
     //1A for loop.
     //Set the direction, then keep adding positions to the locations slice.
@@ -140,22 +143,33 @@ func main() {
     //If the coordinate is not in the map, then we iterate to the next coordinate.
     //Once we find a coordinate that IS in the map, we've found our repeat.
     //At that point, we do the math to calculate the distance.
-		i := 1
-		for {
-			checker := stringmaker(locations[i])
-		
-			if check_map(checker, loc_map) == false {
-				loc_map[checker] = 1
-				i += 1
-			} else {			
-				loc_map[checker] += 1				
-				answer_1b = Abs(locations[i][0]) + Abs(locations[i][1])
-				break
+
+	//Initialize two more variables.
+	answer_1b := 0
+	//loc_map is the map that will track coordinates, for the purposes of our check.
+	loc_map := make(map[string]int)
+	
+	//Straightforward FOR loop here; we'll break when we get a hit.
+	i := 1
+	for {
+		//Make our coordinate into a string, format "x0y0."
+		checker := stringmaker(locations[i])
+		//Check our map for that string.
+		if check_map(checker, loc_map) == false {
+			//If it's not there, add the string as a key to our map, with value 1.
+			loc_map[checker] = 1
+			//Iterate the i to go to the next location.
+			i += 1
+		//Otherwise, break out of this loop.
+		} else {			
+			break
 			}
 		}
 		
-		//Print our 1B solution.
-		fmt.Printf("1b: ")
-		fmt.Printf("%v\n",answer_1b)
-		}
-		
+	//Calculate 1B answer.
+	answer_1b = Abs(locations[i][0]) + Abs(locations[i][1])
+
+	//Print 1B solution.
+	fmt.Printf("1b: ")
+	fmt.Printf("%v\n",answer_1b)
+}
