@@ -71,22 +71,21 @@ func stepmove(position []int, facing int, instruction string, pos_list [][]int) 
 
 }
 
+//We need an absolute value function; Golang doesn't have one built in.
+//Very simple math.
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	} else {
+	return x
+	}
+}
 
 //Simple function: is string a in map b?
 //Will return "true" if yes, "false" if no.
 func check_map (a string, b map[string]int) bool {
 _, found := b[a]
 	return found
-}
-
-//We need an absolute value function; Golang doesn't have one built in.
-//Very simple math.
-func Abs(x int) int {
-	if x < 0 {
-		return -x
-	} else {
-	return x
-	}
 }
 
 //Making a concatenated string for our map.
@@ -131,7 +130,7 @@ func main() {
       
      //Calculate 1A solution: what is our final position?
 		answer_1a := 0
-		answer_1a = Abs(pos_slice[0]) + Abs(pos_slice[1])
+		answer_1a = abs(pos_slice[0]) + abs(pos_slice[1])
 		
 		//Print solution for 1A.
 		fmt.Printf("1a: ")
@@ -167,7 +166,7 @@ func main() {
 		}
 		
 	//Calculate 1B answer.
-	answer_1b = Abs(locations[i][0]) + Abs(locations[i][1])
+	answer_1b = abs(locations[i][0]) + abs(locations[i][1])
 
 	//Print 1B solution.
 	fmt.Printf("1b: ")
